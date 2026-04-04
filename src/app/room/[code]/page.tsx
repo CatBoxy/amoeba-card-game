@@ -52,6 +52,7 @@ export default function RoomPage({
   const [error, setError] = useState("");
   const [scoring, setScoring] = useState<number | null>(null);
   const [scored, setScored] = useState<{ cardId: number; points: number } | null>(null);
+  const [zoomedCard, setZoomedCard] = useState<number | null>(null);
   const playerId = useRef("");
   const pollRef = useRef<ReturnType<typeof setInterval>>(null);
 
@@ -115,6 +116,7 @@ export default function RoomPage({
         setScoring(null);
         return;
       }
+      setZoomedCard(null);
       setScored({ cardId, points: data.points });
       setTimeout(() => setScored(null), 1500);
       fetchGame();
@@ -287,11 +289,45 @@ export default function RoomPage({
         </div>
       )}
 
+      {/* Zoomed card overlay */}
+      {zoomedCard !== null && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/95 px-6">
+          <div className="w-full max-w-xs">
+            <Image
+              src={`/cards/card-${zoomedCard}.png`}
+              alt={`Card worth ${CARD_POINTS[zoomedCard]} points`}
+              width={750}
+              height={1050}
+              className="h-auto w-full rounded-2xl"
+              priority
+            />
+          </div>
+          <div className="mt-2 text-lg font-bold text-slate-300">
+            {CARD_POINTS[zoomedCard]} {CARD_POINTS[zoomedCard] === 1 ? "point" : "points"}
+          </div>
+          <div className="mt-6 flex w-full max-w-xs gap-3">
+            <button
+              onClick={() => setZoomedCard(null)}
+              className="flex-1 h-14 rounded-2xl border-2 border-slate-600 text-lg font-semibold text-slate-300 transition-colors active:bg-slate-800"
+            >
+              Back
+            </button>
+            <button
+              onClick={() => handleScore(zoomedCard)}
+              disabled={scoring !== null}
+              className="flex-1 h-14 rounded-2xl bg-teal text-lg font-semibold text-white transition-colors active:bg-teal-dark disabled:opacity-50"
+            >
+              {scoring !== null ? "Scoring..." : "Amoeba!"}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* My hand */}
       {me ? (
         <div className="flex flex-1 flex-col px-4 pt-4 pb-6">
           <p className="mb-3 text-center text-sm text-slate-400">
-            Your hand — tap a card to score it
+            Tap a card to view it
           </p>
           <div className="flex flex-1 items-center justify-center">
             <div
@@ -302,11 +338,8 @@ export default function RoomPage({
               {myHand.map((cardId) => (
                 <button
                   key={cardId}
-                  onClick={() => handleScore(cardId)}
-                  disabled={scoring !== null}
-                  className={`relative overflow-hidden rounded-2xl bg-slate-800 transition-transform active:scale-95 ${
-                    scoring === cardId ? "opacity-50" : ""
-                  }`}
+                  onClick={() => setZoomedCard(cardId)}
+                  className="relative overflow-hidden rounded-2xl bg-slate-800 transition-transform active:scale-95"
                 >
                   <Image
                     src={`/cards/card-${cardId}.png`}
