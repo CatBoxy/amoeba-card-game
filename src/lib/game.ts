@@ -73,8 +73,14 @@ export function scoreCard(
   const newHand = [...hand];
   newHand.splice(cardIndex, 1);
 
-  // Draw replacement if deck has cards
+  // Draw replacement — reshuffle discard pile into deck if empty
   const newDeck = [...state.deck];
+  let newDiscard = [...state.discardPile, cardId];
+  if (newDeck.length === 0 && newDiscard.length > 0) {
+    const reshuffled = shuffle(newDiscard);
+    newDeck.push(...reshuffled);
+    newDiscard = [];
+  }
   if (newDeck.length > 0) {
     newHand.push(newDeck.shift()!);
   }
@@ -90,7 +96,7 @@ export function scoreCard(
       deck: newDeck,
       hands: { ...state.hands, [playerId]: newHand },
       players: newPlayers,
-      discardPile: [...state.discardPile, cardId],
+      discardPile: newDiscard,
     },
     points: card.points,
   };
